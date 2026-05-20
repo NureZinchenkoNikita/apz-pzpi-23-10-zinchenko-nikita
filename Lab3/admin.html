@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="uk" id="html-tag">
+<head>
+    <meta charset="UTF-8">
+    <title data-i18n="adminPageTitle">Admin Panel - Smart Greenhouse</title>
+    <link rel="stylesheet" href="css/styleAdmin.css">
+</head>
+<body>
+
+    <header>
+        <div class="container">
+            <h2 style="margin: 0; color: white;" data-i18n="adminHeader"> Панель Адміністратора</h2>
+            <div class="flex-row">
+                <button onclick="toggleDirection()" style="background: #0277bd;" data-i18n="btnDir">↔ Напрям тексту</button>
+    
+                <select class="lang-switch" onchange="changeLanguage(this.value)">
+                  <option value="uk">Українська</option>
+                  <option value="en">English</option>
+                </select>
+             <button onclick="window.location.href='GreenHouseWeb.html'" class="danger" data-i18n="btnExit">Вийти</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('users')" data-i18n="tabUsers">👥 Користувачі</button>
+            <button class="tab-btn" onclick="switchTab('greenhouses')" data-i18n="tabGH">🏠 Теплиці та Інфраструктура</button>
+            <button class="tab-btn" onclick="switchTab('export')" data-i18n="tabExport">💾 Завантаження даних</button>
+        </div>
+
+        <!-- ВКЛАДКА 1: КОРИСТУВАЧІ -->
+        <div id="tab-users" class="tab-content">
+            <div class="card">
+                <h3 data-i18n="usersListTitle">Усі користувачі системи</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th onclick="sortTable('admin-users-table', 0, 'number')" class="sortable">ID ↕</th>
+                            <th data-i18n="thEmail" onclick="sortTable('admin-users-table', 1, 'string')" class="sortable">Email ↕</th>
+                            <th data-i18n="thRole">Системна Роль</th>
+                            <th data-i18n="thActions">Дії</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-users-table"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ВКЛАДКА 2: ТЕПЛИЦІ -->
+        <div id="tab-greenhouses" class="tab-content hidden">
+            
+            <!-- Рівень 1: Список теплиць -->
+            <div id="view-gh-list" class="card">
+                <h3 data-i18n="ghListTitle">Управління теплицями</h3>
+                <table>
+                    <thead>
+                        <tr><th>ID</th><th data-i18n="thName">Назва</th><th data-i18n="thOwner">Власник</th><th data-i18n="thActions">Дії</th></tr>
+                    </thead>
+                    <tbody id="admin-gh-table"></tbody>
+                </table>
+            </div>
+
+            <!-- Рівень 2: Доступи конкретної теплиці -->
+            <div id="view-gh-access" class="card hidden">
+                <div class="breadcrumb" onclick="showGhList()"><span data-i18n="backToGH">⬅ Повернутися до списку теплиць</span></div>
+                <h3><span data-i18n="accessForGH">Доступи для теплиці #</span><span id="access-gh-id"></span></h3>
+                
+                <div class="flex-row" style="background: var(--light); padding: 10px; border-radius: 4px; margin-bottom: 10px;">
+                    <input type="text" id="new-access-email" data-i18n-placeholder="emailPlaceholder" placeholder="Email користувача">
+                    <select id="new-access-role">
+                        <option value="1" data-i18n="roleSpec">Спеціаліст</option>
+                        <option value="2" data-i18n="roleViewer">Глядач</option>
+                    </select>
+                    <button class="success" onclick="addAccessToGh()" data-i18n="btnAddAccess">Надати доступ</button>
+                </div>
+
+                <table>
+                    <thead>
+                        <tr><th>ID</th><th data-i18n="thEmail">Email</th><th data-i18n="thRole">Роль в теплиці</th><th data-i18n="thActions">Дії</th></tr>
+                    </thead>
+                    <tbody id="admin-access-table"></tbody>
+                </table>
+            </div>
+
+            <!-- Рівень 3: Пристрої конкретної теплиці -->
+            <div id="view-gh-devices" class="card hidden">
+                <div class="breadcrumb" onclick="showGhList()"><span data-i18n="backToGH">⬅ Повернутися до списку теплиць</span></div>
+                <h3><span data-i18n="devicesForGH">Пристрої теплиці #</span><span id="devices-gh-id"></span></h3>
+                
+                <div class="flex-row" style="background: var(--light); padding: 10px; border-radius: 4px; margin-bottom: 10px;">
+                    <input type="text" id="new-dev-name" data-i18n-placeholder="devNamePlaceholder" placeholder="Назва пристрою">
+                    <input type="text" id="new-dev-type" data-i18n-placeholder="devTypePlaceholder" placeholder="Тип (TemperatureSensor)">
+                    <button class="success" onclick="addDeviceToGh()" data-i18n="btnAddDevice">Додати пристрій</button>
+                </div>
+
+                <table>
+                    <thead>
+                        <tr><th>ID</th><th data-i18n="thName">Назва</th><th data-i18n="thType">Тип</th><th data-i18n="thActions">Дії</th></tr>
+                    </thead>
+                    <tbody id="admin-devices-table"></tbody>
+                </table>
+            </div>
+
+            <!-- Рівень 4: Правила конкретного пристрою -->
+            <div id="view-dev-rules" class="card hidden">
+                <div class="breadcrumb" onclick="showGhDevices(currentGhId)"><span data-i18n="backToDev">⬅ Повернутися до пристроїв</span></div>
+                <h3><span data-i18n="rulesForDev">Правила для пристрою #</span><span id="rules-dev-id"></span></h3>
+                
+                <div class="flex-row" style="background: var(--light); padding: 10px; border-radius: 4px; margin-bottom: 10px;">
+                    <select id="new-rule-cond">
+                        <option value="GreaterThan" data-i18n="condGreater">Більше ніж (>)</option>
+                        <option value="LessThan" data-i18n="condLess">Менше ніж (<)</option>
+                    </select>
+                    <input type="number" id="new-rule-val" data-i18n-placeholder="thresholdPlaceholder" placeholder="Поріг">
+                    <button class="success" onclick="addRuleToDev()" data-i18n="btnAddRule">Додати правило</button>
+                </div>
+
+                <table>
+                    <thead>
+                        <tr><th>ID</th><th data-i18n="thCond">Умова</th><th data-i18n="thThreshold">Поріг</th><th data-i18n="thActions">Дії</th></tr>
+                    </thead>
+                    <tbody id="admin-rules-table"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ВКЛАДКА 3: ЕКСПОРТ ДАНИХ -->
+        <div id="tab-export" class="tab-content hidden">
+            <div class="card">
+                <h3 data-i18n="exportTitle">Гнучке завантаження даних</h3>
+                <p data-i18n="exportDesc">Оберіть сутність для вивантаження її даних та історії у форматі JSON/CSV.</p>
+                
+                <div class="flex-row" style="align-items: flex-end;">
+                    <div>
+                        <label data-i18n="exportType">Тип вивантаження:</label>
+                        <select id="export-type" onchange="toggleExportIdInput()">
+                            <option value="all" data-i18n="expAll">Уся система</option>
+                            <option value="user" data-i18n="expUser">Конкретний користувач</option>
+                            <option value="greenhouse" data-i18n="expGH">Конкретна теплиця</option>
+                            <option value="device" data-i18n="expDev">Конкретний пристрій</option>
+                        </select>
+                    </div>
+                    <div id="export-id-container" class="hidden">
+                        <label>ID:</label>
+                        <input type="number" id="export-id" placeholder="Введіть ID">
+                    </div>
+                    <button class="success" onclick="executeExport()" data-i18n="btnDownload">💾 Завантажити</button>
+                </div>
+
+                <div style="margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
+                    <h3 data-i18n="importTitle">Відновлення з резервної копії (Імпорт)</h3>
+                    <div class="flex-row" style="align-items: center; gap: 15px;">
+                        <input type="file" id="import-file" accept=".json" style="width: auto; margin: 0;">
+                        <button class="success" onclick="executeImport()" data-i18n="btnImport">📂 Імпортувати</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <script src="js/admin.js"></script>
+</body>
+</html>

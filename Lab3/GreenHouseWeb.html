@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="uk" id="html-tag">
+<head>
+    <meta charset="UTF-8">
+    <title data-i18n="pageTitle">Greenhouse Control Panel</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <div id="auth-screen">
+        <div class="auth-box">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h2 id="auth-title" data-i18n="loginTitle" style="text-align: center; margin: 0;">Вхід в систему</h2>
+                <select class="lang-select" onchange="changeLanguage(this.value)">
+                    <option value="uk">UK</option>
+                    <option value="en">EN</option>
+                </select>
+            </div>
+            <br>
+            <input type="text" id="email" data-i18n-placeholder="emailPlaceholder" placeholder="Email">
+            <input type="password" id="password" data-i18n-placeholder="passPlaceholder" placeholder="Пароль">
+            <button onclick="handleAuth()" id="auth-btn" data-i18n="loginBtn" style="width: 100%;">Увійти</button>
+            <p style="text-align: center; margin-top: 15px; font-size: 14px;">
+                <a href="#" onclick="toggleAuthMode()" data-i18n="switchReg" style="color: var(--primary);">Змінити: Вхід / Реєстрація</a>
+            </p>
+            
+        </div>
+    </div>
+
+    <div id="dashboard" class="hidden">
+        <header>
+            <div class="container">
+                <div style="font-size: 1.2em; font-weight: bold;">🌱 Smart Greenhouse</div>
+                <div class="user-info" style="display: flex; align-items: center; gap: 15px;">
+                    <button onclick="toggleDirection()" style="padding: 6px 12px; font-size: 0.9em; background: #0277bd; color: white; border: none; border-radius: 4px; cursor: pointer;">↔ Напрям</button>
+                        <select class="lang-select" onchange="changeLanguage(this.value)" style="color: black;">
+                        <option value="uk">Українська</option>
+                        <option value="en">English</option>
+                    </select>
+                    <span id="display-email"></span>
+                    <button onclick="logout()" class="danger" data-i18n="logout" style="padding: 6px 12px; font-size: 0.9em;">Вихід</button>
+                </div>
+            </div>
+        </header>
+
+        <div class="container">
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchTab('greenhouses')" data-i18n="tabGH">🏠 Теплиці та Доступ</button>
+                <button class="tab-btn" onclick="switchTab('devices')" data-i18n="tabDev">📟 Пристрої</button>
+                <button class="tab-btn" onclick="switchTab('rules')" data-i18n="tabRules">⚙️ Правила</button>
+                <button class="tab-btn" onclick="switchTab('monitoring')" data-i18n="tabMon">📈 Моніторинг</button>
+            </div>
+
+            <div id="tab-greenhouses" class="tab-content">
+                <div class="card manager-only">
+                    <h3 data-i18n="createGH">➕ Створити нову теплицю</h3>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" id="gh-name" data-i18n-placeholder="ghNamePlaceholder" placeholder="Назва теплиці" style="margin-bottom: 0;">
+                        <button onclick="createGreenhouse()" data-i18n="btnCreate">Створити</button>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3 data-i18n="yourGH">Ваші теплиці</h3>
+                    <table id="greenhouses-table">
+                        <thead>
+                            <tr>
+                                <th onclick="sortTable('greenhouses-table', 0, 'number')" class="sortable">ID ↕</th>
+                                <th data-i18n="thName" onclick="sortTable('greenhouses-table', 1, 'string')" class="sortable">Назва ↕</th>
+                                <th data-i18n="thOwner" onclick="sortTable('greenhouses-table', 2, 'string')" class="sortable">Власник ↕</th>
+                                <th data-i18n="thRole" onclick="sortTable('greenhouses-table', 3, 'string')" class="sortable">Ваша роль ↕</th>
+                                <th data-i18n="thActions">Дії</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="tab-devices" class="tab-content hidden">
+                <div class="card manager-only">
+                    <h3 data-i18n="addDevice">➕ Додати пристрій</h3>
+                    <p style="font-size: 0.8em; color: gray;" data-i18n="viewersCannotAddDev">Глядачі не можуть додавати пристрої.</p>
+                    <select id="dev-gh-select"><option data-i18n="selectGH">Оберіть теплицю...</option></select>
+                    <input type="text" id="dev-name" data-i18n-placeholder="devNamePlaceholder" placeholder="Назва пристрою">
+                    <input type="text" id="dev-type" data-i18n-placeholder="devTypePlaceholder" placeholder="Тип (напр. TemperatureSensor)">
+                    <button onclick="createDevice()" data-i18n="btnAddDevice">Додати пристрій</button>
+                </div>
+                <div class="card">
+                    <h3 data-i18n="deviceList">Список пристроїв</h3>
+                    <table id="devices-table">
+                        <thead>
+                            <tr>
+                                <th onclick="sortTable('devices-table', 0, 'number')" class="sortable">ID ↕</th>
+                                <th data-i18n="thName" onclick="sortTable('devices-table', 1, 'string')" class="sortable">Назва ↕</th>
+                                <th data-i18n="thType" onclick="sortTable('devices-table', 2, 'string')" class="sortable">Тип ↕</th>
+                                <th data-i18n="thGH" onclick="sortTable('devices-table', 3, 'string')" class="sortable">Теплиця ↕</th>
+                                <th data-i18n="thActions">Дії</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="tab-rules" class="tab-content hidden">
+                <div class="card manager-only">
+                    <h3 data-i18n="createRule">➕ Створити правило алерту</h3>
+                    <p style="font-size: 0.8em; color: gray;" data-i18n="viewersCannotAddRule">Глядачі не можуть змінювати правила.</p>
+                    <select id="rule-dev-select"><option data-i18n="selectDev">Оберіть пристрій...</option></select>
+                    <div style="display: flex; gap: 10px;">
+                        <select id="rule-condition" style="flex: 1;">
+                            <option value="GreaterThan" data-i18n="condGreater">Більше ніж (>)</option>
+                            <option value="LessThan" data-i18n="condLess">Менше ніж (<)</option>
+                        </select>
+                        <input type="number" id="rule-val" data-i18n-placeholder="thresholdPlaceholder" placeholder="Поріг" style="flex: 1; margin-bottom: 0;">
+                    </div>
+                    <button onclick="createRule()" style="margin-top: 15px;" data-i18n="btnCreateRule">Створити правило</button>
+                </div>
+                <div class="card">
+                    <h3 data-i18n="activeRules">Активні правила</h3>
+                    <table id="rules-table">
+                        <thead>
+                            <tr>
+                                <th onclick="sortTable('rules-table', 0, 'number')" class="sortable">ID ↕</th>
+                                <th data-i18n="thDev" onclick="sortTable('rules-table', 1, 'string')" class="sortable">Пристрій ↕</th>
+                                <th data-i18n="thCond" onclick="sortTable('rules-table', 2, 'string')" class="sortable">Умова ↕</th>
+                                <th data-i18n="thThreshold" onclick="sortTable('rules-table', 3, 'number')" class="sortable">Поріг ↕</th>
+                                <th data-i18n="thActions">Дії</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="tab-monitoring" class="tab-content hidden">
+                <div class="card">
+                    <h3 data-i18n="historyAnalytic">📅 Історія та Аналітика</h3>
+                    <div class="date-controls">
+                        <div class="form-group">
+                            <label data-i18n="dateFrom">З дати:</label>
+                            <input type="date" id="history-start">
+                        </div>
+                        <div class="form-group">
+                            <label data-i18n="dateTo">По дату:</label>
+                            <input type="date" id="history-end">
+                        </div>
+                        <button onclick="loadHistory()" data-i18n="btnChart">📊 Графік</button>
+                        <button onclick="downloadCSV()" class="csv-btn">💾 CSV</button>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="historyChart"></canvas>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                    <div class="card" style="flex: 1; min-width: 300px;">
+                        <h3 data-i18n="activeAlerts">🚨 Активні Тривоги</h3>
+                        <div style="max-height: 400px; overflow-y: auto;">
+                             <table id="alerts-table">
+                                <thead><tr><th data-i18n="thTime">Час</th><th data-i18n="thDev">Пристрій</th><th data-i18n="thMsg">Повідомлення</th></tr></thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="card" style="flex: 1; min-width: 300px;">
+                        <div style="display: flex; justify-content: space-between;">
+                             <h3 data-i18n="liveData">🌡 Живі дані</h3>
+                             <button onclick="loadLiveReadings()" style="padding: 2px 8px;">🔄</button>
+                        </div>
+                        <div style="max-height: 400px; overflow-y: auto;">
+                            <table id="readings-table-live">
+                                <thead><tr><th data-i18n="thTime">Час</th><th data-i18n="thDev">Пристрій</th><th data-i18n="thValue">Значення</th><th data-i18n="thStatus">Статус</th></tr></thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/client.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+</body>
+</html>
